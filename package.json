@@ -1,0 +1,15 @@
+{
+  "name": "autonomous-agentic-commerce-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "razorpay": "^2.9.8"
+  }
+}

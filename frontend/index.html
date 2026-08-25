@@ -459,19 +459,19 @@
         <!-- ── Stats ──────────────────────────── -->
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">Products</div>
-                <div class="stat-value" id="statProducts">—</div>
-                <div class="stat-sub">In catalog</div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="statRevenue" style="color:var(--success);">₹0.00</div>
+                <div class="stat-sub">From Sales</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Transactions</div>
-                <div class="stat-value" id="statTransactions">—</div>
-                <div class="stat-sub">Total processed</div>
+                <div class="stat-label">Supplier Costs</div>
+                <div class="stat-value" id="statExpenses" style="color:var(--red);">₹0.00</div>
+                <div class="stat-sub">From Restocking</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Successful</div>
-                <div class="stat-value" id="statSuccess">—</div>
-                <div class="stat-sub">Orders completed</div>
+                <div class="stat-label">Net Profit</div>
+                <div class="stat-value" id="statProfit">₹0.00</div>
+                <div class="stat-sub">Total Earnings</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Failed / Rejected</div>
@@ -479,9 +479,9 @@
                 <div class="stat-sub">Guardrails + errors</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Spending Cap</div>
-                <div class="stat-value">₹5,000</div>
-                <div class="stat-sub">Max per transaction</div>
+                <div class="stat-label">Products</div>
+                <div class="stat-value" id="statProducts">—</div>
+                <div class="stat-sub">In catalog</div>
             </div>
         </div>
 
@@ -612,9 +612,14 @@
                             <label>Interval (s)</label>
                             <input type="number" id="agentInterval" value="5" min="1" max="60">
                         </div>
-                        <button class="btn btn-primary" id="btnStartAgent" onclick="startAgent()">
-                            ▶ Start Agent
-                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" id="btnStartBuyer" onclick="startAgent('buyer')">
+                                🛒 Start AI Buyer
+                            </button>
+                            <button class="btn btn-primary" style="background-color: var(--blue);" id="btnStartRestock" onclick="startAgent('restock')">
+                                📦 Start AI Restocker
+                            </button>
+                        </div>
                         <button class="btn btn-danger" id="btnStopAgent" onclick="stopAgent()" disabled>
                             ◼ Stop
                         </button>
@@ -753,9 +758,26 @@
             const res = await fetch(API + '/api/ledger');
             if (!res.ok) throw new Error('Ledger fetch failed: ' + res.status);
             const entries = await res.json();
+            
+            let revenuePaise = 0;
+            let expensesPaise = 0;
+            
+            entries.forEach(e => {
+                if (e.status === 'success') {
+                    if (e.type === 'expense') {
+                        expensesPaise += e.cart_value_paise;
+                    } else {
+                        revenuePaise += e.cart_value_paise;
+                    }
+                }
+            });
+            
+            const netPaise = revenuePaise - expensesPaise;
 
-            document.getElementById('statTransactions').textContent = entries.length;
-            document.getElementById('statSuccess').textContent = entries.filter(e => e.status === 'success').length;
+            document.getElementById('statRevenue').textContent = paise(revenuePaise);
+            document.getElementById('statExpenses').textContent = paise(expensesPaise);
+            document.getElementById('statProfit').textContent = paise(netPaise);
+            document.getElementById('statProfit').style.color = netPaise < 0 ? 'var(--red)' : 'var(--success)';
             document.getElementById('statFailed').textContent = entries.filter(e => e.status !== 'success').length;
 
             if (!entries.length) {
@@ -769,16 +791,22 @@
             // Show newest first (non-mutating)
             const sorted = [...entries].reverse();
 
-            const rows = sorted.map(e => `<tr>
+            const rows = sorted.map(e => {
+                const isExpense = e.type === 'expense';
+                const sign = isExpense ? '-' : '+';
+                const color = isExpense ? 'var(--red)' : 'var(--success)';
+                return `<tr>
                 <td>${e.id || '—'}</td>
                 <td style="font-size:12px;white-space:nowrap">${timeAgo(e.timestamp)}</td>
-                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${e.trigger_reason}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">
+                    <span class="badge ${isExpense ? 'badge-blue' : 'badge-green'}">${isExpense ? 'RESTOCK' : 'SALE'}</span> ${e.trigger_reason}
+                </td>
                 <td><span class="sku-code">${(e.skus || []).join(', ')}</span></td>
-                <td class="price">${paise(e.cart_value_paise)}</td>
+                <td class="price" style="color: ${color}">${sign}${paise(e.cart_value_paise)}</td>
                 <td><span class="sku-code">${e.razorpay_order_id || '—'}</span></td>
                 <td>${statusBadge(e.status)}</td>
                 <td style="font-size:12px;color:var(--red);max-width:150px;overflow:hidden;text-overflow:ellipsis">${e.error_message || '—'}</td>
-            </tr>`).join('');
+            </tr>`}).join('');
 
             document.getElementById('ledgerBody').innerHTML = rows;
 
@@ -838,19 +866,20 @@
         });
     }
 
-    async function startAgent() {
+    async function startAgent(mode = 'buyer') {
         if (agentRunning) return;
         agentRunning = true;
         agentAbort = new AbortController();
 
-        document.getElementById('btnStartAgent').disabled = true;
+        document.getElementById('btnStartBuyer').disabled = true;
+        document.getElementById('btnStartRestock').disabled = true;
         document.getElementById('btnStopAgent').disabled = false;
 
         const cycles = parseInt(document.getElementById('agentCycles').value) || 3;
         const interval = parseInt(document.getElementById('agentInterval').value) || 5;
 
         logConsole('════════════════════════════════════', 'info');
-        logConsole('  AUTONOMOUS BUYER AGENT STARTING', 'info');
+        logConsole(`  AUTONOMOUS ${mode === 'buyer' ? 'BUYER' : 'RESTOCK'} AGENT STARTING`, 'info');
         logConsole('════════════════════════════════════', 'info');
         logConsole(`Cycles: ${cycles}  |  Interval: ${interval}s`, 'info');
 
@@ -886,12 +915,35 @@
             logConsole('Evaluating catalog...', 'info');
 
             const intents = [];
-            for (const p of products) {
-                if (p.stock <= p.reorder_threshold) {
-                    const qty = Math.max((p.reorder_threshold * 2) - p.stock, 1);
-                    const cost = qty * p.price_paise;
-                    if (cost <= 500000) {
-                        intents.push({ sku: p.sku, quantity: qty, reason: `Low stock: ${p.stock}/${p.reorder_threshold}`, cost });
+            
+            if (mode === 'buyer') {
+                for (const p of products) {
+                    if (p.stock > 0) {
+                        // Agent decides to buy units based on affordability, respecting available stock
+                        let qty = Math.min(2, p.stock);
+                        const maxAffordableQty = Math.floor(500000 / p.price_paise);
+                        qty = Math.min(qty, maxAffordableQty);
+                        
+                        if (qty > 0) {
+                            const cost = qty * p.price_paise;
+                            intents.push({ sku: p.sku, quantity: qty, reason: `AI Consumer Demand: Sourcing ${p.category}`, cost });
+                        }
+                    }
+                }
+                // Randomize intents so it doesn't always buy the same top items
+                intents.sort(() => 0.5 - Math.random());
+            } else {
+                // Restocker logic
+                for (const p of products) {
+                    if (p.stock <= p.reorder_threshold) {
+                        let qty = Math.max((p.reorder_threshold * 2) - p.stock, 1);
+                        const maxAffordableQty = Math.floor(500000 / (p.price_paise * 0.7));
+                        qty = Math.min(qty, maxAffordableQty);
+                        
+                        if (qty > 0) {
+                            const cost = qty * (p.price_paise * 0.7); // 70% cost
+                            intents.push({ sku: p.sku, quantity: qty, reason: `Low stock trigger: ${p.stock}/${p.reorder_threshold}`, cost });
+                        }
                     }
                 }
             }
@@ -919,7 +971,7 @@
 
             // PURCHASING
             setAgentState('PURCHASING');
-            logConsole(`Initiating purchase for ${intents.length} item(s)...`, 'info');
+            logConsole(`Initiating ${mode === 'buyer' ? 'purchase' : 'restock'} for ${intents.length} item(s)...`, 'info');
 
             try {
                 const payload = {
@@ -927,7 +979,8 @@
                     trigger_reason: intents.map(i => i.reason).join('; ')
                 };
 
-                const res = await fetch(API + '/api/checkout', {
+                const endpoint = mode === 'buyer' ? '/api/checkout' : '/api/restock';
+                const res = await fetch(API + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -984,7 +1037,8 @@
         logConsole('════════════════════════════════════', 'info');
 
         agentRunning = false;
-        document.getElementById('btnStartAgent').disabled = false;
+        document.getElementById('btnStartBuyer').disabled = false;
+        document.getElementById('btnStartRestock').disabled = false;
         document.getElementById('btnStopAgent').disabled = true;
         if (document.querySelector('.state-node.active[data-state="IDLE"]') === null &&
             document.querySelector('.state-node.failed') === null) {
@@ -999,6 +1053,9 @@
         agentRunning = false;
         if (agentAbort) agentAbort.abort();
         setAgentState('SHUTDOWN');
+        document.getElementById('btnStartBuyer').disabled = false;
+        document.getElementById('btnStartRestock').disabled = false;
+        document.getElementById('btnStopAgent').disabled = true;
     }
 
     function sleep(ms) {
