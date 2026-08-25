@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Commerce Engine</title>
+    <style>
+        /* ── Reset & Variables ─────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #0a0e17;
+            --surface:   #111827;
+            --card:      #1a2236;
+            --border:    #1e2a3f;
+            --text:      #e2e8f0;
+            --muted:     #6b7a99;
+            --accent:    #3b82f6;
+            --green:     #10b981;
+            --red:       #ef4444;
+            --amber:     #f59e0b;
+            --purple:    #8b5cf6;
+            --cyan:      #06b6d4;
+            --radius:    10px;
+            --shadow:    0 1px 3px rgba(0,0,0,.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Layout ────────────────────────────────── */
+        .app { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+        /* ── Header ────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+        .logo span { font-size: 12px; color: var(--muted); display: block; margin-top: -2px; }
+
+        .status-badge {
+            display: flex; align-items: center; gap: 7px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 12px; font-weight: 600;
+            background: rgba(16, 185, 129, .12);
+            color: var(--green);
+        }
+        .status-badge .dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .status-badge.offline { background: rgba(239,68,68,.12); color: var(--red); }
+        .status-badge.offline .dot { background: var(--red); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+
+        /* ── Stats Grid ────────────────────────────── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .stat-card:nth-child(1)::before { background: var(--accent); }
+        .stat-card:nth-child(2)::before { background: var(--green); }
+        .stat-card:nth-child(3)::before { background: var(--amber); }
+        .stat-card:nth-child(4)::before { background: var(--red); }
+        .stat-card:nth-child(5)::before { background: var(--purple); }
+
+        .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        /* ── Tabs ──────────────────────────────────── */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Cards / Panels ────────────────────────── */
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .panel-title { font-size: 15px; font-weight: 600; }
+
+        /* ── Table ──────────────────────────────────── */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--muted);
+            background: rgba(0,0,0,.15);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: rgba(59, 130, 246, .04); }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+        .badge-green  { background: rgba(16,185,129,.14); color: var(--green); }
+        .badge-red    { background: rgba(239,68,68,.14);   color: var(--red); }
+        .badge-amber  { background: rgba(245,158,11,.14);  color: var(--amber); }
+        .badge-blue   { background: rgba(59,130,246,.14);  color: var(--accent); }
+        .badge-purple { background: rgba(139,92,246,.14);  color: var(--purple); }
+
+        .stock-bar {
+            width: 80px; height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        .stock-bar .fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .4s;
+        }
+
+        .sku-code {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--cyan);
+        }
+
+        .price {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Agent Control ─────────────────────────── */
+        .agent-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+        }
+        .btn-primary:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-danger {
+            background: rgba(239,68,68,.15);
+            color: var(--red);
+            border: 1px solid rgba(239,68,68,.25);
+        }
+        .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.25); }
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+        .input-group {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .input-group label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+        .input-group input, .input-group select {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 13px;
+            width: 80px;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ── Agent State Visualization ─────────────── */
+        .state-machine {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 16px 20px;
+            overflow-x: auto;
+        }
+        .state-node {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            background: var(--surface);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            transition: all .3s;
+        }
+        .state-node.active {
+            background: rgba(59,130,246,.15);
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(59,130,246,.2);
+        }
+        .state-node.completed {
+            background: rgba(16,185,129,.12);
+            color: var(--green);
+            border-color: var(--green);
+        }
+        .state-node.failed {
+            background: rgba(239,68,68,.12);
+            color: var(--red);
+            border-color: var(--red);
+        }
+        .state-arrow {
+            color: var(--muted);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ── Agent Log Console ─────────────────────── */
+        .console {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .console::-webkit-scrollbar { width: 6px; }
+        .console::-webkit-scrollbar-track { background: transparent; }
+        .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .log-line { white-space: pre-wrap; word-break: break-word; }
+        .log-time { color: var(--muted); }
+        .log-info { color: var(--accent); }
+        .log-success { color: var(--green); }
+        .log-error { color: var(--red); }
+        .log-warn { color: var(--amber); }
+
+        /* ── Guardrail Gauge ───────────────────────── */
+        .guardrail-bar {
+            margin: 20px 0;
+            padding: 0 20px 20px;
+        }
+        .gauge-track {
+            width: 100%;
+            height: 10px;
+            background: var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .gauge-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width .6s ease;
+            background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+        }
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* ── Checkout Modal ────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            width: 90%;
+            max-width: 460px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+        .modal h2 { font-size: 18px; margin-bottom: 18px; }
+        .modal .form-row { margin-bottom: 14px; }
+        .modal label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+        .modal input, .modal select {
+            width: 100%;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 14px;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal .result {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        .modal .result.show { display: block; }
+        .modal .result.ok { background: rgba(16,185,129,.12); color: var(--green); }
+        .modal .result.err { background: rgba(239,68,68,.12); color: var(--red); }
+
+        /* ── Empty State ───────────────────────────── */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+        }
+        .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+        /* ── Footer ────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 28px 0 12px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* ── Responsive ────────────────────────────── */
+        @media (max-width: 640px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 22px; }
+            header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .agent-controls { flex-direction: column; align-items: stretch; }
+            .state-machine { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- ── Header ─────────────────────────── -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <h1>Agentic Commerce Engine</h1>
+                    <span>Autonomous M2M Trading System</span>
+                </div>
+            </div>
+            <div class="status-badge" id="apiStatus">
+                <div class="dot"></div>
+                <span>SYSTEM ONLINE</span>
+            </div>
+        </header>
+
+        <!-- ── Stats ──────────────────────────── -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Products</div>
+                <div class="stat-value" id="statProducts">—</div>
+                <div class="stat-sub">In catalog</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value" id="statTransactions">—</div>
+                <div class="stat-sub">Total processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Successful</div>
+                <div class="stat-value" id="statSuccess">—</div>
+                <div class="stat-sub">Orders completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Failed / Rejected</div>
+                <div class="stat-value" id="statFailed">—</div>
+                <div class="stat-sub">Guardrails + errors</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Spending Cap</div>
+                <div class="stat-value">₹5,000</div>
+                <div class="stat-sub">Max per transaction</div>
+            </div>
+        </div>
+
+        <!-- ── Tabs ───────────────────────────── -->
+        <div class="tabs">
+            <button class="tab active" data-tab="catalog">📦 Catalog</button>
+            <button class="tab" data-tab="ledger">📒 Audit Ledger</button>
+            <button class="tab" data-tab="agent">🤖 Agent Control</button>
+        </div>
+
+        <!-- ── Catalog Tab ────────────────────── -->
+        <div class="tab-panel active" id="tab-catalog">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Agent-Readable Inventory</div>
+                    <button class="btn btn-outline" onclick="loadCatalog()">↻ Refresh</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Reorder At</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalogBody">
+                            <tr><td colspan="7" class="empty"><div class="empty-icon">📦</div>Loading catalog...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Ledger Tab ─────────────────────── -->
+        <div class="tab-panel" id="tab-ledger">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Transaction Audit Trail</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <label style="font-size:12px;color:var(--muted);">
+                            <input type="checkbox" id="autoRefresh" checked style="margin-right:4px;accent-color:var(--accent);">Auto-refresh
+                        </label>
+                        <button class="btn btn-outline" onclick="loadLedger()">↻ Refresh</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Timestamp</th>
+                                <th>Trigger Reason</th>
+                                <th>SKUs</th>
+                                <th>Cart Value</th>
+                                <th>Razorpay Order</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerBody">
+                            <tr><td colspan="8" class="empty"><div class="empty-icon">📒</div>No transactions yet. Run the agent or make a manual checkout.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Guardrail Gauge -->
+            <div class="panel" style="margin-top:16px;">
+                <div class="panel-header">
+                    <div class="panel-title">💰 Spending Guardrail</div>
+                </div>
+                <div class="guardrail-bar">
+                    <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">Last transaction amount vs. ₹5,000 hard limit</p>
+                    <div class="gauge-track">
+                        <div class="gauge-fill" id="gaugeFill" style="width:0%"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>₹0</span>
+                        <span id="gaugeValue">—</span>
+                        <span style="color:var(--red);">₹5,000 (HARD LIMIT)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Agent Tab ──────────────────────── -->
+        <div class="tab-panel" id="tab-agent">
+            <!-- State Machine Visualization -->
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-header">
+                    <div class="panel-title">State Machine</div>
+                    <span class="badge badge-blue" id="agentStateBadge">IDLE</span>
+                </div>
+                <div class="state-machine">
+                    <div class="state-node active" data-state="IDLE">IDLE</div>
+                    <div class="state-arrow">→</div>
+                    <div class="state-node" data-state="SCANNING">SCANNING</div>
+                    <div class="state-arrow">→</div>
+                    <div class="state-node" data-state="EVALUATING">EVALUATING</div>
+                    <div class="state-arrow">→</div>
+                    <div class="state-node" data-state="PURCHASING">PURCHASING</div>
+                    <div class="state-arrow">→</div>
+                    <div class="state-node" data-state="COMPLETED">COMPLETED</div>
+                    <div class="state-arrow" style="margin-left:8px;">|</div>
+                    <div class="state-node" data-state="FAILED">FAILED</div>
+                    <div class="state-arrow">→</div>
+                    <div class="state-node" data-state="SHUTDOWN">SHUTDOWN</div>
+                </div>
+            </div>
+
+            <!-- Agent Controls -->
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-header">
+                    <div class="panel-title">Agent Controls</div>
+                </div>
+                <div style="padding:20px;">
+                    <div class="agent-controls">
+                        <div class="input-group">
+                            <label>Cycles</label>
+                            <input type="number" id="agentCycles" value="3" min="1" max="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Interval (s)</label>
+                            <input type="number" id="agentInterval" value="5" min="1" max="60">
+                        </div>
+                        <button class="btn btn-primary" id="btnStartAgent" onclick="startAgent()">
+                            ▶ Start Agent
+                        </button>
+                        <button class="btn btn-danger" id="btnStopAgent" onclick="stopAgent()" disabled>
+                            ◼ Stop
+                        </button>
+                        <button class="btn btn-outline" onclick="openCheckoutModal()">
+                            🛒 Manual Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Console -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Agent Console</div>
+                    <button class="btn btn-outline" onclick="clearConsole()" style="padding:5px 12px;font-size:12px;">Clear</button>
+                </div>
+                <div class="console" id="agentConsole">
+                    <div class="log-line"><span class="log-time">[system]</span> Agent console ready. Press <strong>▶ Start Agent</strong> to begin autonomous buying.</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Autonomous Agentic Commerce Engine v1.0 &nbsp;·&nbsp; Razorpay Test Mode &nbsp;·&nbsp; Built with FastAPI + Vanilla JS
+        </footer>
+    </div>
+
+    <!-- ── Checkout Modal ──────────────────── -->
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal">
+            <h2>🛒 Manual Checkout</h2>
+            <div class="form-row">
+                <label>Product</label>
+                <select id="modalSku"></select>
+            </div>
+            <div class="form-row">
+                <label>Quantity</label>
+                <input type="number" id="modalQty" value="1" min="1" max="100">
+            </div>
+            <div class="form-row">
+                <label>Trigger Reason</label>
+                <input type="text" id="modalReason" value="manual_checkout" placeholder="e.g. low stock reorder">
+            </div>
+            <div class="result" id="modalResult"></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeCheckoutModal()">Cancel</button>
+                <button class="btn btn-primary" id="btnCheckout" onclick="doCheckout()">Place Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ── Config ────────────────────────────── */
+    const API = '';  // Same origin
+    let refreshTimer = null;
+    let agentRunning = false;
+    let agentAbort = null;
+
+    /* ── Tabs ──────────────────────────────── */
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    /* ── Helpers ───────────────────────────── */
+    function paise(p) {
+        return '₹' + (p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    }
+    function timeAgo(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString('en-IN', { hour12: true, day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    function stockColor(stock, threshold) {
+        if (stock <= threshold * 0.5) return 'var(--red)';
+        if (stock <= threshold) return 'var(--amber)';
+        return 'var(--green)';
+    }
+    function statusBadge(status) {
+        const s = (status || '').toLowerCase();
+        if (s === 'success') return '<span class="badge badge-green">SUCCESS</span>';
+        if (s === 'failed')  return '<span class="badge badge-red">FAILED</span>';
+        if (s === 'rejected') return '<span class="badge badge-amber">REJECTED</span>';
+        return '<span class="badge badge-blue">' + status + '</span>';
+    }
+
+    /* ── Load Catalog ─────────────────────── */
+    async function loadCatalog() {
+        try {
+            const res = await fetch(API + '/api/inventory');
+            if (!res.ok) throw new Error('Catalog fetch failed: ' + res.status);
+            const data = await res.json();
+            const products = data.products || [];
+
+            document.getElementById('statProducts').textContent = products.length;
+
+            if (!products.length) {
+                document.getElementById('catalogBody').innerHTML =
+                    '<tr><td colspan="7" class="empty"><div class="empty-icon">📦</div>No products in catalog</td></tr>';
+                return;
+            }
+
+            const rows = products.map(p => {
+                const ratio = Math.min(p.stock / (p.reorder_threshold * 3), 1) * 100;
+                const color = stockColor(p.stock, p.reorder_threshold);
+                const statusText = p.stock <= p.reorder_threshold
+                    ? '<span class="badge badge-red">LOW STOCK</span>'
+                    : '<span class="badge badge-green">IN STOCK</span>';
+
+                return `<tr>
+                    <td><span class="sku-code">${p.sku}</span></td>
+                    <td>${p.name}</td>
+                    <td><span class="badge badge-purple">${p.category}</span></td>
+                    <td class="price">${paise(p.price_paise)}</td>
+                    <td>
+                        ${p.stock}
+                        <div class="stock-bar"><div class="fill" style="width:${ratio}%;background:${color}"></div></div>
+                    </td>
+                    <td>${p.reorder_threshold}</td>
+                    <td>${statusText}</td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('catalogBody').innerHTML = rows;
+        } catch (e) {
+            console.error('loadCatalog error:', e);
+        }
+    }
+
+    /* ── Load Ledger ──────────────────────── */
+    async function loadLedger() {
+        try {
+            const res = await fetch(API + '/api/ledger');
+            if (!res.ok) throw new Error('Ledger fetch failed: ' + res.status);
+            const entries = await res.json();
+
+            document.getElementById('statTransactions').textContent = entries.length;
+            document.getElementById('statSuccess').textContent = entries.filter(e => e.status === 'success').length;
+            document.getElementById('statFailed').textContent = entries.filter(e => e.status !== 'success').length;
+
+            if (!entries.length) {
+                document.getElementById('ledgerBody').innerHTML =
+                    '<tr><td colspan="8" class="empty"><div class="empty-icon">📒</div>No transactions yet</td></tr>';
+                document.getElementById('gaugeFill').style.width = '0%';
+                document.getElementById('gaugeValue').textContent = '—';
+                return;
+            }
+
+            // Show newest first (non-mutating)
+            const sorted = [...entries].reverse();
+
+            const rows = sorted.map(e => `<tr>
+                <td>${e.id || '—'}</td>
+                <td style="font-size:12px;white-space:nowrap">${timeAgo(e.timestamp)}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${e.trigger_reason}</td>
+                <td><span class="sku-code">${(e.skus || []).join(', ')}</span></td>
+                <td class="price">${paise(e.cart_value_paise)}</td>
+                <td><span class="sku-code">${e.razorpay_order_id || '—'}</span></td>
+                <td>${statusBadge(e.status)}</td>
+                <td style="font-size:12px;color:var(--red);max-width:150px;overflow:hidden;text-overflow:ellipsis">${e.error_message || '—'}</td>
+            </tr>`).join('');
+
+            document.getElementById('ledgerBody').innerHTML = rows;
+
+            // Update gauge with most recent transaction
+            const last = sorted[0];
+            const pct = Math.min((last.cart_value_paise / 500000) * 100, 100);
+            document.getElementById('gaugeFill').style.width = pct + '%';
+            document.getElementById('gaugeValue').textContent = paise(last.cart_value_paise);
+        } catch (e) {
+            console.error('loadLedger error:', e);
+        }
+    }
+
+    /* ── API Status ───────────────────────── */
+    async function checkStatus() {
+        try {
+            const res = await fetch(API + '/api');
+            if (res.ok) setOnline(); else setOffline();
+        } catch { setOffline(); }
+    }
+
+    function setOnline() {
+        const el = document.getElementById('apiStatus');
+        el.className = 'status-badge';
+        el.querySelector('span').textContent = 'SYSTEM ONLINE';
+    }
+    function setOffline() {
+        const el = document.getElementById('apiStatus');
+        el.className = 'status-badge offline';
+        el.querySelector('span').textContent = 'SYSTEM OFFLINE';
+    }
+
+    /* ── Agent Simulation (Browser-Side) ──── */
+    function logConsole(msg, type = 'info') {
+        const con = document.getElementById('agentConsole');
+        const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
+        const cls = { info: 'log-info', success: 'log-success', error: 'log-error', warn: 'log-warn' }[type] || 'log-info';
+        con.innerHTML += `<div class="log-line"><span class="log-time">[${time}]</span> <span class="${cls}">${msg}</span></div>`;
+        con.scrollTop = con.scrollHeight;
+    }
+
+    function clearConsole() {
+        document.getElementById('agentConsole').innerHTML = '';
+        logConsole('Console cleared.', 'info');
+    }
+
+    function setAgentState(state) {
+        document.getElementById('agentStateBadge').textContent = state;
+
+        document.querySelectorAll('.state-node').forEach(n => {
+            n.className = 'state-node';
+            if (n.dataset.state === state) {
+                if (state === 'FAILED' || state === 'SHUTDOWN') n.classList.add('failed');
+                else if (state === 'COMPLETED') n.classList.add('completed');
+                else n.classList.add('active');
+            }
+        });
+    }
+
+    async function startAgent() {
+        if (agentRunning) return;
+        agentRunning = true;
+        agentAbort = new AbortController();
+
+        document.getElementById('btnStartAgent').disabled = true;
+        document.getElementById('btnStopAgent').disabled = false;
+
+        const cycles = parseInt(document.getElementById('agentCycles').value) || 3;
+        const interval = parseInt(document.getElementById('agentInterval').value) || 5;
+
+        logConsole('════════════════════════════════════', 'info');
+        logConsole('  AUTONOMOUS BUYER AGENT STARTING', 'info');
+        logConsole('════════════════════════════════════', 'info');
+        logConsole(`Cycles: ${cycles}  |  Interval: ${interval}s`, 'info');
+
+        let failures = 0;
+        const MAX_FAILURES = 3;
+
+        for (let i = 0; i < cycles; i++) {
+            if (!agentRunning) break;
+
+            logConsole(`\n── Cycle ${i + 1}/${cycles} ──────────────`, 'info');
+
+            // SCANNING
+            setAgentState('SCANNING');
+            logConsole('Scanning catalog...', 'info');
+
+            let products;
+            try {
+                const res = await fetch(API + '/api/inventory', { signal: agentAbort.signal });
+                const data = await res.json();
+                products = data.products || [];
+                logConsole(`Found ${products.length} products.`, 'info');
+            } catch (e) {
+                if (e.name === 'AbortError') break;
+                logConsole('Failed to scan catalog: ' + e.message, 'error');
+                setAgentState('FAILED');
+                failures++;
+                if (failures >= MAX_FAILURES) { logConsole('Max failures reached. Shutting down.', 'error'); setAgentState('SHUTDOWN'); break; }
+                continue;
+            }
+
+            // EVALUATING
+            setAgentState('EVALUATING');
+            logConsole('Evaluating catalog...', 'info');
+
+            const intents = [];
+            for (const p of products) {
+                if (p.stock <= p.reorder_threshold) {
+                    const qty = Math.max((p.reorder_threshold * 2) - p.stock, 1);
+                    const cost = qty * p.price_paise;
+                    if (cost <= 500000) {
+                        intents.push({ sku: p.sku, quantity: qty, reason: `Low stock: ${p.stock}/${p.reorder_threshold}`, cost });
+                    }
+                }
+            }
+
+            if (!intents.length) {
+                logConsole('No purchase triggers found.', 'warn');
+                setAgentState('IDLE');
+                if (i < cycles - 1 && agentRunning) {
+                    logConsole(`Sleeping ${interval}s...`, 'info');
+                    await sleep(interval * 1000);
+                }
+                continue;
+            }
+
+            // Trim to budget
+            let total = intents.reduce((s, i) => s + i.cost, 0);
+            while (total > 500000 && intents.length > 1) {
+                intents.pop();
+                total = intents.reduce((s, i) => s + i.cost, 0);
+            }
+
+            for (const intent of intents) {
+                logConsole(`Intent: ${intent.quantity}x ${intent.sku} — ${intent.reason}`, 'info');
+            }
+
+            // PURCHASING
+            setAgentState('PURCHASING');
+            logConsole(`Initiating purchase for ${intents.length} item(s)...`, 'info');
+
+            try {
+                const payload = {
+                    items: intents.map(i => ({ sku: i.sku, quantity: i.quantity })),
+                    trigger_reason: intents.map(i => i.reason).join('; ')
+                };
+
+                const res = await fetch(API + '/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: agentAbort.signal
+                });
+
+                if (res.status === 200) {
+                    const order = await res.json();
+                    setAgentState('COMPLETED');
+                    logConsole(`✓ Purchase successful! Order: ${order.order_id} | Amount: ${paise(order.amount_paise)}`, 'success');
+                    failures = 0;
+                } else if (res.status === 422) {
+                    const err = await res.json();
+                    setAgentState('FAILED');
+                    logConsole(`✗ SPENDING LIMIT EXCEEDED — ${err.detail}`, 'error');
+                    logConsole(`  Max: ${paise(err.max_allowed_paise || 500000)} | Attempted: ${paise(err.attempted_paise || 0)}`, 'error');
+                } else {
+                    const err = await res.json().catch(() => ({ detail: res.statusText }));
+                    setAgentState('FAILED');
+                    logConsole(`✗ Transaction Failed — ${res.status}: ${err.detail || 'Unknown error'}`, 'error');
+                    failures++;
+                }
+            } catch (e) {
+                if (e.name === 'AbortError') break;
+                setAgentState('FAILED');
+                logConsole(`✗ Transaction Failed — ${e.message}`, 'error');
+                failures++;
+            }
+
+            if (failures >= MAX_FAILURES) {
+                logConsole('Max consecutive failures reached. Shutting down.', 'error');
+                setAgentState('SHUTDOWN');
+                break;
+            }
+
+            // Reload data after purchase attempt
+            loadCatalog();
+            loadLedger();
+
+            // Only transition to IDLE if not already FAILED/SHUTDOWN
+            const currentState = document.getElementById('agentStateBadge').textContent;
+            if (currentState === 'COMPLETED' || currentState === 'FAILED') {
+                setAgentState('IDLE');
+            }
+
+            if (i < cycles - 1 && agentRunning) {
+                logConsole(`Sleeping ${interval}s...`, 'info');
+                await sleep(interval * 1000);
+            }
+        }
+
+        logConsole('════════════════════════════════════', 'info');
+        logConsole('  AGENT STOPPED', 'info');
+        logConsole('════════════════════════════════════', 'info');
+
+        agentRunning = false;
+        document.getElementById('btnStartAgent').disabled = false;
+        document.getElementById('btnStopAgent').disabled = true;
+        if (document.querySelector('.state-node.active[data-state="IDLE"]') === null &&
+            document.querySelector('.state-node.failed') === null) {
+            setAgentState('IDLE');
+        }
+        loadCatalog();
+        loadLedger();
+    }
+
+    function stopAgent() {
+        logConsole('Shutdown requested by user.', 'warn');
+        agentRunning = false;
+        if (agentAbort) agentAbort.abort();
+        setAgentState('SHUTDOWN');
+    }
+
+    function sleep(ms) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(resolve, ms);
+            if (agentAbort) {
+                agentAbort.signal.addEventListener('abort', () => { clearTimeout(timer); resolve(); });
+            }
+        });
+    }
+
+    /* ── Manual Checkout Modal ────────────── */
+    async function openCheckoutModal() {
+        document.getElementById('checkoutModal').classList.add('open');
+        document.getElementById('modalResult').className = 'result';
+        document.getElementById('modalResult').textContent = '';
+
+        try {
+            const res = await fetch(API + '/api/inventory');
+            const data = await res.json();
+            const sel = document.getElementById('modalSku');
+            sel.innerHTML = data.products.map(p =>
+                `<option value="${p.sku}">${p.sku} — ${p.name} (${paise(p.price_paise)})</option>`
+            ).join('');
+        } catch (e) {
+            logConsole('Failed to load products for checkout.', 'error');
+        }
+    }
+
+    function closeCheckoutModal() {
+        document.getElementById('checkoutModal').classList.remove('open');
+    }
+
+    async function doCheckout() {
+        const sku = document.getElementById('modalSku').value;
+        const qty = parseInt(document.getElementById('modalQty').value) || 1;
+        const reason = document.getElementById('modalReason').value || 'manual_checkout';
+        const resultEl = document.getElementById('modalResult');
+
+        document.getElementById('btnCheckout').disabled = true;
+
+        try {
+            const res = await fetch(API + '/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: [{ sku, quantity: qty }], trigger_reason: reason })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                resultEl.className = 'result show ok';
+                resultEl.textContent = `✓ Order created: ${data.order_id} — ${paise(data.amount_paise)}`;
+                logConsole(`Manual checkout success: ${data.order_id}`, 'success');
+            } else {
+                resultEl.className = 'result show err';
+                resultEl.textContent = `✗ ${data.error || data.detail || 'Order failed'}`;
+                logConsole(`Manual checkout failed: ${data.detail || data.error}`, 'error');
+            }
+        } catch (e) {
+            resultEl.className = 'result show err';
+            resultEl.textContent = `✗ Network error: ${e.message}`;
+        }
+
+        document.getElementById('btnCheckout').disabled = false;
+        loadCatalog();
+        loadLedger();
+    }
+
+    /* ── Auto-refresh ─────────────────────── */
+    function startAutoRefresh() {
+        // Refresh ledger + catalog every 5 seconds
+        refreshTimer = setInterval(() => {
+            if (document.getElementById('autoRefresh').checked) {
+                loadLedger();
+                loadCatalog();
+            }
+        }, 5000);
+
+        // Check API health every 15 seconds
+        setInterval(() => {
+            checkStatus();
+        }, 15000);
+    }
+
+    /* ── Init ──────────────────────────────── */
+    async function init() {
+        await checkStatus();
+        try { await loadCatalog(); } catch(e) { console.error('Init catalog error:', e); }
+        try { await loadLedger(); } catch(e) { console.error('Init ledger error:', e); }
+        startAutoRefresh();
+    }
+
+    init();
+    </script>
+</body>
+</html>
