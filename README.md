@@ -9,7 +9,8 @@ The Autonomous Agentic Commerce Engine is a machine-to-machine (M2M) commerce pl
 
 This project specifically demonstrates two contrasting autonomous agents:
 1. **The AI Buyer (External Consumer):** Simulates external market demand. It browses the catalog, autonomously decides what to purchase based on availability, and executes Razorpay checkouts, generating **Sales Revenue** and depleting stock.
-2. **The AI Restocker (Internal Manager):** Works for the merchant. It constantly monitors inventory levels, identifies low stock (`stock <= reorder_threshold`), and automatically pays suppliers via Razorpay to replenish the warehouse, incurring **Supplier Expenses**.
+2. **The AI Restocker (Internal Manager):** Works for the merchant. It monitors inventory levels and automatically pays suppliers via Razorpay to replenish the warehouse, incurring **Supplier Expenses**.
+   - **Zero-Stock Auto-Trigger:** If the AI Buyer depletes a product's stock to exactly 0 (OUT OF STOCK), the system instantly detects this and activates a background restock action to replenish the item within the same cycle.
 
 ## Agent Architecture
 
@@ -88,6 +89,7 @@ Transactions are immutably recorded in the ledger. The dashboard visualizes this
 - **Supplier Costs**: Sum of all successful `RESTOCK` transactions (calculated at 70% of retail price).
 - **Net Profit**: Revenue - Expenses.
 - **Budget Limit**: Real-time display of the per-transaction financial cap (₹5,000) to ensure visibility of constraints.
+- **Real-Time Inventory Status**: Visually tracks stock depletion, dynamically switching items to a gray `OUT OF STOCK` badge when depleted.
 
 ## Strict Financial Guardrails
 
@@ -108,7 +110,8 @@ The system enforces strict financial guardrails to prevent AI runaway spending:
 ## Project Structure
 ```text
 /
-├── server.js            # Express backend API & Razorpay integration
+├── backend/
+│   └── server.js        # Express backend API & Razorpay integration
 ├── frontend/
 │   └── index.html       # Agent Dashboard, UI, and AI Logic
 ├── package.json         # Node dependencies

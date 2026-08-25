@@ -192,6 +192,7 @@
         .badge-amber  { background: rgba(245,158,11,.14);  color: var(--amber); }
         .badge-blue   { background: rgba(59,130,246,.14);  color: var(--accent); }
         .badge-purple { background: rgba(139,92,246,.14);  color: var(--purple); }
+        .badge-gray   { background: rgba(107,114,128,.14); color: var(--muted); }
 
         .stock-bar {
             width: 80px; height: 6px;
@@ -733,9 +734,14 @@
             const rows = products.map(p => {
                 const ratio = Math.min(p.stock / (p.reorder_threshold * 3), 1) * 100;
                 const color = stockColor(p.stock, p.reorder_threshold);
-                const statusText = p.stock <= p.reorder_threshold
-                    ? '<span class="badge badge-red">LOW STOCK</span>'
-                    : '<span class="badge badge-green">IN STOCK</span>';
+                let statusText;
+                if (p.stock === 0) {
+                    statusText = '<span class="badge badge-gray">OUT OF STOCK</span>';
+                } else if (p.stock <= p.reorder_threshold) {
+                    statusText = '<span class="badge badge-red">LOW STOCK</span>';
+                } else {
+                    statusText = '<span class="badge badge-green">IN STOCK</span>';
+                }
 
                 return `<tr>
                     <td><span class="sku-code">${p.sku}</span></td>
@@ -997,6 +1003,49 @@
                     setAgentState('COMPLETED');
                     logConsole(`✓ Purchase successful! Order: ${order.order_id} | Amount: ${paise(order.amount_paise)}`, 'success');
                     failures = 0;
+                    
+                    // --- AUTO RESTOCK ON OUT OF STOCK ---
+                    if (mode === 'buyer') {
+                        try {
+                            const invRes = await fetch(API + '/api/inventory', { signal: agentAbort.signal });
+                            const data = await invRes.json();
+                            const restockIntents = [];
+                            for (const p of data.products || []) {
+                                if (p.stock === 0) {
+                                    let qty = Math.max((p.reorder_threshold * 2) - p.stock, 1);
+                                    const maxAffordableQty = Math.floor(500000 / (p.price_paise * 0.7));
+                                    qty = Math.min(qty, maxAffordableQty);
+                                    if (qty > 0) {
+                                        const cost = qty * (p.price_paise * 0.7);
+                                        restockIntents.push({ sku: p.sku, quantity: qty, reason: `Auto-Restock: OUT OF STOCK`, cost });
+                                    }
+                                }
+                            }
+                            
+                            if (restockIntents.length > 0) {
+                                logConsole(`⚠️ Out of stock detected. AI Restocker activating in background...`, 'warn');
+                                const restockPayload = {
+                                    items: restockIntents.map(i => ({ sku: i.sku, quantity: i.quantity })),
+                                    trigger_reason: restockIntents.map(i => i.reason).join('; ')
+                                };
+                                const rRes = await fetch(API + '/api/restock', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(restockPayload),
+                                    signal: agentAbort.signal
+                                });
+                                if (rRes.status === 200) {
+                                    const rOrder = await rRes.json();
+                                    logConsole(`📦 Restock successful! Order: ${rOrder.order_id} | Amount: ${paise(rOrder.amount_paise)}`, 'success');
+                                } else {
+                                    logConsole(`✗ Restock Failed — ${rRes.status}`, 'error');
+                                }
+                            }
+                        } catch (e) {
+                            if (e.name !== 'AbortError') logConsole('Auto-restock check failed: ' + e.message, 'error');
+                        }
+                    }
+                    // ------------------------------------
                 } else if (res.status === 422) {
                     const err = await res.json();
                     setAgentState('FAILED');

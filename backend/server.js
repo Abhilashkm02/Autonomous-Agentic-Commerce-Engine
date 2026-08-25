@@ -282,8 +282,8 @@ app.get('/api/ledger', (req, res) => {
 });
 
 // Serve frontend
-app.use(express.static(join(__dirname, 'frontend')));
-app.get('*', (req, res) => res.sendFile(join(__dirname, 'frontend/index.html')));
+app.use(express.static(join(__dirname, '../frontend')));
+app.get('*', (req, res) => res.sendFile(join(__dirname, '../frontend/index.html')));
 
 app.listen(3000, '0.0.0.0', () => {
     console.log('Server running on port 3000');
