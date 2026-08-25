@@ -87,6 +87,7 @@ Transactions are immutably recorded in the ledger. The dashboard visualizes this
 - **Total Revenue**: Sum of all successful `SALE` transactions.
 - **Supplier Costs**: Sum of all successful `RESTOCK` transactions (calculated at 70% of retail price).
 - **Net Profit**: Revenue - Expenses.
+- **Budget Limit**: Real-time display of the per-transaction financial cap (₹5,000) to ensure visibility of constraints.
 
 ## Strict Financial Guardrails
 
