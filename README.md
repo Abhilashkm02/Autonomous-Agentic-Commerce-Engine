@@ -7,10 +7,36 @@
 ## Overview
 The Autonomous Agentic Commerce Engine is a machine-to-machine (M2M) commerce platform demonstrating how AI agents interact with merchant infrastructure. 
 
-This project specifically demonstrates two contrasting autonomous agents:
+This project demonstrates two contrasting autonomous agents operating within a highly advanced, dynamic market simulation:
 1. **The AI Buyer (External Consumer):** Simulates external market demand. It browses the catalog, autonomously decides what to purchase based on availability, and executes Razorpay checkouts, generating **Sales Revenue** and depleting stock.
 2. **The AI Restocker (Internal Manager):** Works for the merchant. It monitors inventory levels and automatically pays suppliers via Razorpay to replenish the warehouse, incurring **Supplier Expenses**.
-   - **Zero-Stock Auto-Trigger:** If the AI Buyer depletes a product's stock to exactly 0 (OUT OF STOCK), the system instantly detects this and activates a background restock action to replenish the item within the same cycle.
+
+## 🌟 Advanced Platform Features
+
+### ⚡ Algorithmic Dynamic Pricing Engine
+The platform continuously models real-world price elasticity based on inventory scarcity:
+- **Scarcity Surge (+25%)**: Automatically scales up price when item stock drops to 2 or fewer units to protect inventory.
+- **Overstock Flash Sale (-15%)**: Automatically discounts overabundant stock (≥ 15 units) to incentivize buyer agents.
+
+### 📊 Real-Time Financial Velocity Analytics
+An interactive dashboard plotting M2M economic activity:
+- Live SVG line chart plotting cumulative **Sales Revenue**, **Supplier Expenses**, and **Net Profit** across agent trading cycles.
+- Metrics cards tracking active surge counts, zero-stock events, and capital velocity.
+
+### 🤖 AI Strategy & Personality Configurator
+Customize agent behavior on the fly:
+- **AI Buyer Personalities**: 
+  - `🎯 Zero-Stock Hunter`: Targets low-stock items to force and verify auto-restock triggers.
+  - `🏷️ Bargain Hunter`: Specifically targets discounted SKUs.
+  - `🛡️ Frugal Saver`: Restricts purchases to low-cost items under a set threshold.
+  - `🎲 Balanced Explorer`: Random market sourcing.
+- **AI Restocker Modes**: Choose between `⚡ Zero-Stock Only (Just-In-Time)` and `📦 Proactive Threshold Restock`.
+
+### 💎 Premium Glassmorphism UI
+A highly polished, cyber-themed glassmorphism interface featuring:
+- Frosted glass panels with smooth specular reflection lighting (`backdrop-filter`).
+- Animated floating ambient orbs and glowing perspective mesh grids.
+- An interactive, responsive HTML5 Canvas particle constellation background.
 
 ## Agent Architecture
 
@@ -26,22 +52,6 @@ flowchart LR
     
     AIBuyer -->|Generates| Revenue[Sales Revenue]
     AIRestocker -->|Incurs| Expenses[Supplier Expenses]
-```
-
-## Agent State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> SCANNING: Timer Trigger
-    SCANNING --> EVALUATING: Catalog Fetched
-    EVALUATING --> PURCHASING: Items Selected
-    EVALUATING --> IDLE: No Action Needed / Out of Budget
-    PURCHASING --> COMPLETED: Payment Success
-    PURCHASING --> FAILED: Payment Error / Timeout
-    COMPLETED --> IDLE
-    FAILED --> SHUTDOWN: Guardrail Triggered
-    FAILED --> IDLE: Retryable Error
 ```
 
 ## Quick Start
@@ -74,47 +84,17 @@ stateDiagram-v2
 
 ## API Reference
 
-| Endpoint | Method | Description | Payload Example |
-|----------|--------|-------------|-----------------|
-| `/api/inventory` | GET | List available products | N/A |
-| `/api/inventory/:sku` | GET | Get specific product | N/A |
-| `/api/checkout` | POST | Initiate purchase (Buyer) | `{"items":[{"sku":"SKU-1","quantity":1}]}` |
-| `/api/restock` | POST | Initiate restock (Restocker) | `{"items":[{"sku":"SKU-1","quantity":5}]}` |
-| `/api/ledger` | GET | View audit ledger | N/A |
-
-## Audit Ledger & Dashboard
-
-Transactions are immutably recorded in the ledger. The dashboard visualizes this in real-time, calculating:
-- **Total Revenue**: Sum of all successful `SALE` transactions.
-- **Supplier Costs**: Sum of all successful `RESTOCK` transactions (calculated at 70% of retail price).
-- **Net Profit**: Revenue - Expenses.
-- **Budget Limit**: Real-time display of the per-transaction financial cap (₹5,000) to ensure visibility of constraints.
-- **Real-Time Inventory Status**: Visually tracks stock depletion, dynamically switching items to a gray `OUT OF STOCK` badge when depleted.
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/inventory` | GET | List available products with dynamic pricing |
+| `/api/checkout` | POST | Initiate purchase (Buyer) |
+| `/api/restock` | POST | Initiate restock (Restocker) |
+| `/api/ledger` | GET | View audit ledger |
+| `/api/analytics` | GET | Fetch real-time M2M financial metrics |
 
 ## Strict Financial Guardrails
 
 The system enforces strict financial guardrails to prevent AI runaway spending:
 - **Maximum Transaction Amount**: Hard cap of ₹5,000 (500,000 paise) per transaction enforced by the backend.
-- **Dynamic Quantity Scaling**: Instead of failing blindly, the AI Restocker intelligence mathematically reduces its desired order quantities until the cart fits within the ₹5,000 budget constraint.
+- **Dynamic Quantity Scaling**: AI intelligence mathematically reduces its desired order quantities until the cart fits within the budget constraint.
 - **Circuit Breaker**: Halts the agent loop and shuts down if sequential failures exceed thresholds.
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Backend | Node.js / Express |
-| Frontend | Vanilla HTML / CSS / JS |
-| Payment Gateway | Razorpay Node SDK |
-| Persistence | In-memory Ledger (Mock DB) |
-
-## Project Structure
-```text
-/
-├── backend/
-│   └── server.js        # Express backend API & Razorpay integration
-├── frontend/
-│   └── index.html       # Agent Dashboard, UI, and AI Logic
-├── package.json         # Node dependencies
-├── .env.example         # Environment variables template
-└── README.md
-```

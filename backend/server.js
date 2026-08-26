@@ -34,22 +34,62 @@ let products = [
 
 let ledger = [];
 
+// Dynamic Pricing Algorithm Helper
+function getProductPricing(product) {
+    if (product.stock > 0 && product.stock <= 2) {
+        return {
+            effective_price_paise: Math.round(product.price_paise * 1.25),
+            pricing_type: 'surge',
+            pricing_label: '⚡ SURGE (+25%)',
+            multiplier: 1.25,
+            base_price_paise: product.price_paise
+        };
+    } else if (product.stock >= 15) {
+        return {
+            effective_price_paise: Math.round(product.price_paise * 0.85),
+            pricing_type: 'discount',
+            pricing_label: '🏷️ FLASH SALE (-15%)',
+            multiplier: 0.85,
+            base_price_paise: product.price_paise
+        };
+    }
+    return {
+        effective_price_paise: product.price_paise,
+        pricing_type: 'standard',
+        pricing_label: '✓ STABLE',
+        multiplier: 1.0,
+        base_price_paise: product.price_paise
+    };
+}
+
 app.get('/api', (req, res) => {
     res.json({
         status: "online",
         service: "Autonomous Agentic Commerce Engine",
-        version: "1.0.0",
+        version: "1.1.0",
         endpoints: {
-            "/api/inventory": "GET - Agent-readable product catalog",
+            "/api/inventory": "GET - Agent-readable product catalog with dynamic surge pricing",
             "/api/checkout": "POST - Execute purchase transaction",
-            "/api/ledger": "GET - View audit trail"
+            "/api/restock": "POST - Execute supplier replenishment",
+            "/api/ledger": "GET - View audit trail",
+            "/api/analytics": "GET - View real-time M2M financial analytics"
         }
     });
 });
 
 app.get('/api/inventory', (req, res) => {
+    const enrichedProducts = products.map(p => {
+        const pricing = getProductPricing(p);
+        return {
+            ...p,
+            effective_price_paise: pricing.effective_price_paise,
+            pricing_type: pricing.pricing_type,
+            pricing_label: pricing.pricing_label,
+            multiplier: pricing.multiplier
+        };
+    });
     res.json({
-        products: products,
+        products: enrichedProducts,
         timestamp: new Date().toISOString()
     });
 });
@@ -59,7 +99,13 @@ app.get('/api/inventory/:sku', (req, res) => {
     if (!product) {
         return res.status(404).json({ detail: "Product not found" });
     }
-    res.json(product);
+    const pricing = getProductPricing(product);
+    res.json({
+        ...product,
+        effective_price_paise: pricing.effective_price_paise,
+        pricing_type: pricing.pricing_type,
+        pricing_label: pricing.pricing_label
+    });
 });
 
 let razorpayClient = null;
@@ -95,7 +141,8 @@ app.post('/api/checkout', async (req, res) => {
             if (product.stock < item.quantity) {
                 throw new Error(`Insufficient stock for ${item.sku}`);
             }
-            total_paise += product.price_paise * item.quantity;
+            const pricing = getProductPricing(product);
+            total_paise += pricing.effective_price_paise * item.quantity;
             skus_list.push(item.sku);
         }
         
@@ -279,6 +326,58 @@ app.post('/api/restock', async (req, res) => {
 
 app.get('/api/ledger', (req, res) => {
     res.json(ledger);
+});
+
+app.get('/api/analytics', (req, res) => {
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let successfulSales = 0;
+    let successfulRestocks = 0;
+    let failedOrders = 0;
+
+    let history = [];
+    let runningRevenue = 0;
+    let runningExpenses = 0;
+
+    ledger.forEach(entry => {
+        if (entry.status === 'success') {
+            if (entry.type === 'sale') {
+                totalRevenue += entry.cart_value_paise;
+                runningRevenue += entry.cart_value_paise;
+                successfulSales++;
+            } else if (entry.type === 'expense') {
+                totalExpenses += entry.cart_value_paise;
+                runningExpenses += entry.cart_value_paise;
+                successfulRestocks++;
+            }
+        } else {
+            failedOrders++;
+        }
+        history.push({
+            id: entry.id,
+            timestamp: entry.timestamp,
+            type: entry.type,
+            status: entry.status,
+            revenue: runningRevenue / 100,
+            expenses: runningExpenses / 100,
+            profit: (runningRevenue - runningExpenses) / 100
+        });
+    });
+
+    res.json({
+        metrics: {
+            total_revenue_paise: totalRevenue,
+            total_expenses_paise: totalExpenses,
+            net_profit_paise: totalRevenue - totalExpenses,
+            successful_sales: successfulSales,
+            successful_restocks: successfulRestocks,
+            failed_orders: failedOrders,
+            total_items_in_catalog: products.length,
+            out_of_stock_count: products.filter(p => p.stock === 0).length,
+            surge_pricing_count: products.filter(p => p.stock > 0 && p.stock <= 2).length
+        },
+        history: history
+    });
 });
 
 // Serve frontend

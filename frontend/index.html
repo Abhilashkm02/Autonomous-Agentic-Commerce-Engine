@@ -9,307 +9,522 @@
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg:        #0a0e17;
-            --surface:   #111827;
-            --card:      #1a2236;
-            --border:    #1e2a3f;
-            --text:      #e2e8f0;
-            --muted:     #6b7a99;
+            --bg:        #060810;
+            --surface:   rgba(13, 19, 36, 0.55);
+            --card:      rgba(20, 29, 52, 0.45);
+            --border:    rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(59, 130, 246, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.14);
+            --glass-shine: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), inset 0 0 20px 0 rgba(255, 255, 255, 0.03);
+            --text:      #f1f5f9;
+            --muted:     #8493b2;
             --accent:    #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
             --green:     #10b981;
+            --green-glow: rgba(16, 185, 129, 0.4);
             --red:       #ef4444;
             --amber:     #f59e0b;
             --purple:    #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.4);
             --cyan:      #06b6d4;
-            --radius:    10px;
-            --shadow:    0 1px 3px rgba(0,0,0,.4);
+            --radius:    16px;
+            --shadow:    0 12px 40px -8px rgba(0, 0, 0, 0.6);
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #0c1224 0%, #060810 70%, #030408 100%);
             color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ── Background Animations & Grid Mesh ──────── */
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -3;
+            pointer-events: none;
+        }
+
+        .bg-grid-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -2;
+            pointer-events: none;
+            mask-image: radial-gradient(ellipse at 50% 30%, rgba(0,0,0,0.85) 0%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse at 50% 30%, rgba(0,0,0,0.85) 0%, transparent 80%);
+            animation: gridPulse 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes gridPulse {
+            0% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.65; transform: scale(1.015); }
+            100% { opacity: 0.35; transform: scale(1); }
+        }
+
+        .ambient-orbs {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(110px);
+            opacity: 0.4;
+            animation: orbFloat 22s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+            width: 550px; height: 550px;
+            background: radial-gradient(circle, var(--accent) 0%, rgba(59,130,246,0) 70%);
+            top: -150px; left: -100px;
+        }
+        .orb-2 {
+            width: 650px; height: 650px;
+            background: radial-gradient(circle, var(--purple) 0%, rgba(139,92,246,0) 70%);
+            bottom: -200px; right: -150px;
+            animation-delay: -7s;
+        }
+        .orb-3 {
+            width: 480px; height: 480px;
+            background: radial-gradient(circle, var(--cyan) 0%, rgba(6,182,212,0) 70%);
+            top: 35%; left: 55%;
+            animation-delay: -14s;
+        }
+        .orb-4 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, var(--green) 0%, rgba(16,185,129,0) 70%);
+            bottom: 10%; left: 10%;
+            opacity: 0.25;
+            animation-delay: -10s;
+        }
+
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(70px, 90px) scale(1.15); }
+            100% { transform: translate(-50px, -60px) scale(0.9); }
         }
 
         /* ── Layout ────────────────────────────────── */
-        .app { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+        .app {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 28px 24px;
+            position: relative;
+            z-index: 1;
+        }
 
         /* ── Header ────────────────────────────────── */
         header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 0;
+            padding: 20px 28px;
             margin-bottom: 28px;
-            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow), var(--glass-shine);
+            transition: all .35s ease;
         }
+        header:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 15px 45px -10px rgba(0, 0, 0, 0.7), var(--glass-shine);
+        }
+
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
         .logo-icon {
-            width: 38px; height: 38px;
+            width: 44px; height: 44px;
             background: linear-gradient(135deg, var(--accent), var(--purple));
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
+            box-shadow: 0 4px 20px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.4);
+            animation: logoGlow 4s ease-in-out infinite alternate;
         }
-        .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-        .logo span { font-size: 12px; color: var(--muted); display: block; margin-top: -2px; }
+        @keyframes logoGlow {
+            0% { box-shadow: 0 4px 20px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.4); }
+            100% { box-shadow: 0 4px 28px var(--purple-glow), inset 0 1px 0 rgba(255,255,255,0.4); }
+        }
+
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--text));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo span { font-size: 12px; color: var(--muted); display: block; margin-top: -1px; font-weight: 500; }
 
         .status-badge {
-            display: flex; align-items: center; gap: 7px;
-            padding: 6px 14px;
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px;
             border-radius: 999px;
-            font-size: 12px; font-weight: 600;
+            font-size: 12px; font-weight: 700;
+            letter-spacing: .5px;
             background: rgba(16, 185, 129, .12);
             color: var(--green);
+            border: 1px solid rgba(16, 185, 129, .3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 0 18px rgba(16, 185, 129, .18);
+            transition: all .3s;
         }
         .status-badge .dot {
-            width: 8px; height: 8px;
+            width: 9px; height: 9px;
             background: var(--green);
             border-radius: 50%;
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 8px var(--green);
+            animation: pulseRing 2s infinite;
         }
-        .status-badge.offline { background: rgba(239,68,68,.12); color: var(--red); }
-        .status-badge.offline .dot { background: var(--red); animation: none; }
+        .status-badge.offline {
+            background: rgba(239,68,68,.12);
+            color: var(--red);
+            border-color: rgba(239,68,68,.3);
+            box-shadow: 0 0 18px rgba(239,68,68,.18);
+        }
+        .status-badge.offline .dot { background: var(--red); box-shadow: none; animation: none; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .4; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
         /* ── Stats Grid ────────────────────────────── */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
+            gap: 18px;
             margin-bottom: 28px;
         }
         .stat-card {
             background: var(--card);
-            border: 1px solid var(--border);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
             border-radius: var(--radius);
-            padding: 20px;
+            padding: 22px;
             position: relative;
             overflow: hidden;
+            box-shadow: var(--shadow), var(--glass-shine);
+            transition: all .35s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: fadeInUp .5s ease backward;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.015);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 45px -5px rgba(0, 0, 0, 0.7), 0 0 25px rgba(59, 130, 246, 0.18), var(--glass-shine);
         }
         .stat-card::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 3px;
+            transition: height .3s;
         }
-        .stat-card:nth-child(1)::before { background: var(--accent); }
-        .stat-card:nth-child(2)::before { background: var(--green); }
-        .stat-card:nth-child(3)::before { background: var(--amber); }
-        .stat-card:nth-child(4)::before { background: var(--red); }
-        .stat-card:nth-child(5)::before { background: var(--purple); }
+        .stat-card:hover::before { height: 4px; }
+        .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+        .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--green), #34d399); }
+        .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--amber), #fbbf24); }
+        .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--red), #f87171); }
+        .stat-card:nth-child(5)::before { background: linear-gradient(90deg, var(--purple), #c084fc); }
+        .stat-card:nth-child(6)::before { background: linear-gradient(90deg, var(--cyan), var(--accent)); }
 
-        .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-        .stat-value { font-size: 28px; font-weight: 700; }
-        .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; transition: text-shadow .3s; }
+        .stat-card:hover .stat-value { text-shadow: 0 0 15px rgba(255, 255, 255, 0.25); }
+        .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         /* ── Tabs ──────────────────────────────────── */
         .tabs {
             display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0;
+            gap: 8px;
+            margin-bottom: 22px;
+            background: var(--surface);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 7px;
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow), var(--glass-shine);
         }
         .tab {
-            padding: 10px 20px;
+            padding: 10px 24px;
             border: none;
-            background: none;
+            border-radius: 12px;
+            background: transparent;
             color: var(--muted);
             cursor: pointer;
             font-size: 14px;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
-            transition: all .2s;
+            font-weight: 600;
+            transition: all .25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .tab:hover { color: var(--text); }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.06); }
         .tab.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
+            color: #fff;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(139, 92, 246, 0.35));
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
+        .tab-panel { display: none; opacity: 0; transform: scale(0.99); transition: opacity .3s ease, transform .3s ease; }
+        .tab-panel.active { display: block; opacity: 1; transform: scale(1); }
 
         /* ── Cards / Panels ────────────────────────── */
         .panel {
             background: var(--card);
-            border: 1px solid var(--border);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid var(--glass-border);
             border-radius: var(--radius);
             overflow: hidden;
+            box-shadow: var(--shadow), var(--glass-shine);
+            transition: all .35s ease;
         }
+        .panel:hover { border-color: var(--border-hover); box-shadow: 0 16px 45px -5px rgba(0, 0, 0, 0.75), var(--glass-shine); }
+
         .panel-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(12px);
         }
-        .panel-title { font-size: 15px; font-weight: 600; }
+        .panel-title { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
 
         /* ── Table ──────────────────────────────────── */
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         thead th {
             text-align: left;
-            padding: 12px 16px;
+            padding: 14px 20px;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: .5px;
+            letter-spacing: .8px;
             color: var(--muted);
-            background: rgba(0,0,0,.15);
-            border-bottom: 1px solid var(--border);
-            font-weight: 600;
+            background: rgba(0,0,0,.3);
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 700;
         }
         tbody td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--glass-border);
             vertical-align: middle;
+            transition: background .2s;
         }
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover { background: rgba(59, 130, 246, .04); }
+        tbody tr { transition: all .2s ease; }
+        tbody tr:hover { background: rgba(59, 130, 246, .08); }
 
         .badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 999px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: .3px;
+            letter-spacing: .4px;
+            border: 1px solid transparent;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all .25s;
         }
-        .badge-green  { background: rgba(16,185,129,.14); color: var(--green); }
-        .badge-red    { background: rgba(239,68,68,.14);   color: var(--red); }
-        .badge-amber  { background: rgba(245,158,11,.14);  color: var(--amber); }
-        .badge-blue   { background: rgba(59,130,246,.14);  color: var(--accent); }
-        .badge-purple { background: rgba(139,92,246,.14);  color: var(--purple); }
-        .badge-gray   { background: rgba(107,114,128,.14); color: var(--muted); }
+        .badge-green  { background: rgba(16,185,129,.14); color: var(--green); border-color: rgba(16,185,129,.25); }
+        .badge-red    { background: rgba(239,68,68,.14);   color: var(--red);   border-color: rgba(239,68,68,.25); }
+        .badge-amber  { background: rgba(245,158,11,.14);  color: var(--amber); border-color: rgba(245,158,11,.25); }
+        .badge-blue   { background: rgba(59,130,246,.14);  color: var(--accent); border-color: rgba(59,130,246,.25); }
+        .badge-purple { background: rgba(139,92,246,.14);  color: var(--purple); border-color: rgba(139,92,246,.25); }
+        .badge-gray   { background: rgba(148,163,184,.14); color: var(--muted); border-color: rgba(148,163,184,.25); }
 
         .stock-bar {
-            width: 80px; height: 6px;
+            width: 90px; height: 7px;
             background: var(--border);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
             display: inline-block;
             vertical-align: middle;
-            margin-left: 8px;
+            margin-left: 10px;
+            position: relative;
         }
         .stock-bar .fill {
             height: 100%;
-            border-radius: 3px;
-            transition: width .4s;
+            border-radius: 4px;
+            transition: width .5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .stock-bar .fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .sku-code {
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
             font-size: 12px;
             color: var(--cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
         }
 
         .price {
-            font-weight: 600;
+            font-weight: 700;
             font-variant-numeric: tabular-nums;
+            color: #fff;
         }
 
         /* ── Agent Control ─────────────────────────── */
         .agent-controls {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             align-items: center;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
+            padding: 9px 22px;
+            border: 1px solid transparent;
+            border-radius: 10px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all .2s;
+            transition: all .25s ease;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
         }
-        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(1); }
         .btn-primary {
             background: linear-gradient(135deg, var(--accent), var(--purple));
             color: #fff;
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
-        .btn-primary:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--purple-glow);
+            filter: brightness(1.1);
+        }
         .btn-danger {
-            background: rgba(239,68,68,.15);
+            background: rgba(239,68,68,.18);
             color: var(--red);
-            border: 1px solid rgba(239,68,68,.25);
+            border: 1px solid rgba(239,68,68,.3);
         }
-        .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.25); }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239,68,68,.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(239,68,68,.25);
+        }
         .btn-outline {
-            background: transparent;
+            background: rgba(255,255,255,0.03);
             color: var(--text);
             border: 1px solid var(--border);
         }
-        .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+        .btn-outline:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.08);
+            transform: translateY(-2px);
+        }
 
         .input-group {
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 10px;
         }
-        .input-group label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+        .input-group label { font-size: 13px; color: var(--muted); font-weight: 600; white-space: nowrap; }
         .input-group input, .input-group select {
-            padding: 7px 12px;
+            padding: 8px 14px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--surface);
             color: var(--text);
             font-size: 13px;
-            width: 80px;
+            font-weight: 600;
+            width: 85px;
+            transition: all .2s;
         }
         .input-group input:focus, .input-group select:focus {
             outline: none;
             border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
         }
 
         /* ── Agent State Visualization ─────────────── */
         .state-machine {
             display: flex;
-            gap: 4px;
+            gap: 6px;
             align-items: center;
-            padding: 16px 20px;
+            padding: 18px 24px;
             overflow-x: auto;
         }
         .state-node {
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: .3px;
-            background: var(--surface);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            background: rgba(255,255,255,0.03);
             color: var(--muted);
             border: 1px solid var(--border);
             white-space: nowrap;
-            transition: all .3s;
+            transition: all .35s ease;
         }
         .state-node.active {
-            background: rgba(59,130,246,.15);
+            background: rgba(59,130,246,.2);
             color: var(--accent);
             border-color: var(--accent);
-            box-shadow: 0 0 12px rgba(59,130,246,.2);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: scale(1.04);
+            animation: nodePulse 1.8s infinite alternate;
         }
+        @keyframes nodePulse {
+            0% { box-shadow: 0 0 12px var(--accent-glow); }
+            100% { box-shadow: 0 0 25px rgba(59,130,246,0.6); }
+        }
+
         .state-node.completed {
-            background: rgba(16,185,129,.12);
+            background: rgba(16,185,129,.15);
             color: var(--green);
             border-color: var(--green);
         }
         .state-node.failed {
-            background: rgba(239,68,68,.12);
+            background: rgba(239,68,68,.15);
             color: var(--red);
             border-color: var(--red);
         }
@@ -317,55 +532,63 @@
             color: var(--muted);
             font-size: 14px;
             flex-shrink: 0;
+            opacity: 0.6;
         }
 
         /* ── Agent Log Console ─────────────────────── */
         .console {
-            background: #0d1117;
+            background: #080c14;
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 16px;
-            max-height: 320px;
+            padding: 18px;
+            max-height: 340px;
             overflow-y: auto;
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
             font-size: 12px;
             line-height: 1.8;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
         }
         .console::-webkit-scrollbar { width: 6px; }
         .console::-webkit-scrollbar-track { background: transparent; }
-        .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .console::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        .console::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        .log-line { white-space: pre-wrap; word-break: break-word; }
-        .log-time { color: var(--muted); }
+        .log-line { white-space: pre-wrap; word-break: break-word; animation: fadeInLog .2s ease; }
+        @keyframes fadeInLog { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: translateX(0); } }
+
+        .log-time { color: var(--muted); opacity: 0.8; }
         .log-info { color: var(--accent); }
-        .log-success { color: var(--green); }
-        .log-error { color: var(--red); }
+        .log-success { color: var(--green); text-shadow: 0 0 8px rgba(16,185,129,0.3); }
+        .log-error { color: var(--red); text-shadow: 0 0 8px rgba(239,68,68,0.3); }
         .log-warn { color: var(--amber); }
 
         /* ── Guardrail Gauge ───────────────────────── */
         .guardrail-bar {
             margin: 20px 0;
-            padding: 0 20px 20px;
+            padding: 0 24px 24px;
         }
         .gauge-track {
             width: 100%;
-            height: 10px;
-            background: var(--border);
-            border-radius: 5px;
+            height: 12px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 6px;
             overflow: hidden;
             position: relative;
+            border: 1px solid var(--border);
         }
         .gauge-fill {
             height: 100%;
-            border-radius: 5px;
-            transition: width .6s ease;
+            border-radius: 6px;
+            transition: width .7s cubic-bezier(0.16, 1, 0.3, 1);
             background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+            box-shadow: 0 0 15px rgba(239,68,68,0.4);
         }
         .gauge-labels {
             display: flex;
             justify-content: space-between;
-            margin-top: 6px;
-            font-size: 11px;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
             color: var(--muted);
         }
 
@@ -374,73 +597,101 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,.6);
-            backdrop-filter: blur(4px);
+            background: rgba(4, 6, 12, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            opacity: 0;
+            transition: opacity .3s ease;
         }
-        .modal-overlay.open { display: flex; }
+        .modal-overlay.open { display: flex; opacity: 1; }
         .modal {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
+            background: var(--surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-hover);
+            border-radius: 20px;
+            padding: 32px;
             width: 90%;
-            max-width: 460px;
-            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            max-width: 480px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.8), 0 0 30px var(--accent-glow);
+            transform: scale(0.95);
+            transition: transform .3s ease;
         }
-        .modal h2 { font-size: 18px; margin-bottom: 18px; }
-        .modal .form-row { margin-bottom: 14px; }
-        .modal label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+        .modal-overlay.open .modal { transform: scale(1); }
+        .modal h2 { font-size: 20px; font-weight: 800; margin-bottom: 20px; letter-spacing: -0.3px; }
+        .modal .form-row { margin-bottom: 16px; }
+        .modal label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
         .modal input, .modal select {
             width: 100%;
-            padding: 9px 14px;
+            padding: 10px 16px;
             border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
+            border-radius: 10px;
+            background: var(--card);
             color: var(--text);
             font-size: 14px;
+            font-weight: 500;
+            transition: border-color .2s;
         }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal input:focus, .modal select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
         .modal .result {
-            margin-top: 14px;
-            padding: 12px;
-            border-radius: 8px;
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 10px;
             font-size: 13px;
+            font-weight: 600;
             display: none;
         }
         .modal .result.show { display: block; }
-        .modal .result.ok { background: rgba(16,185,129,.12); color: var(--green); }
-        .modal .result.err { background: rgba(239,68,68,.12); color: var(--red); }
+        .modal .result.ok { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+        .modal .result.err { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
 
         /* ── Empty State ───────────────────────────── */
         .empty {
             text-align: center;
-            padding: 40px 20px;
+            padding: 48px 20px;
             color: var(--muted);
+            font-weight: 500;
         }
-        .empty-icon { font-size: 36px; margin-bottom: 10px; }
+        .empty-icon { font-size: 40px; margin-bottom: 12px; }
 
         /* ── Footer ────────────────────────────────── */
         footer {
             text-align: center;
-            padding: 28px 0 12px;
-            font-size: 12px;
+            padding: 32px 0 16px;
+            font-size: 13px;
             color: var(--muted);
+            font-weight: 500;
         }
 
         /* ── Responsive ────────────────────────────── */
         @media (max-width: 640px) {
             .stats { grid-template-columns: repeat(2, 1fr); }
             .stat-value { font-size: 22px; }
-            header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            header { flex-direction: column; gap: 14px; align-items: flex-start; }
             .agent-controls { flex-direction: column; align-items: stretch; }
             .state-machine { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
+    <!-- ── Animated Background Layers ───────────── -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="bg-grid-overlay"></div>
+    <div class="ambient-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
+
     <div class="app">
         <!-- ── Header ─────────────────────────── -->
         <header>
@@ -494,6 +745,8 @@
         <!-- ── Tabs ───────────────────────────── -->
         <div class="tabs">
             <button class="tab active" data-tab="catalog">📦 Catalog</button>
+            <button class="tab" data-tab="pricing">⚡ Dynamic Pricing</button>
+            <button class="tab" data-tab="analytics">📊 Velocity Analytics</button>
             <button class="tab" data-tab="ledger">📒 Audit Ledger</button>
             <button class="tab" data-tab="agent">🤖 Agent Control</button>
         </div>
@@ -513,9 +766,9 @@
                                 <th>Product</th>
                                 <th>Category</th>
                                 <th>Price</th>
-                                <th>Stock</th>
+                                <th>Stock Level</th>
                                 <th>Reorder At</th>
-                                <th>Status</th>
+                                <th>Pricing Status</th>
                             </tr>
                         </thead>
                         <tbody id="catalogBody">
@@ -523,6 +776,59 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- ── Dynamic Pricing Tab ─────────────── -->
+        <div class="tab-panel" id="tab-pricing">
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-header">
+                    <div class="panel-title">⚡ Algorithmic Surge & Flash Sale Matrix</div>
+                    <span class="badge badge-purple">M2M REAL-TIME PRICING</span>
+                </div>
+                <div style="padding:24px;">
+                    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">
+                        The Autonomous Commerce Engine continuously calculates price elasticity based on inventory scarcity:
+                        <br>• <strong>High Scarcity (Stock ≤ 2)</strong>: Triggers automatic <strong>+25% Surge Demand Pricing</strong> to protect inventory.
+                        <br>• <strong>Overstock (Stock ≥ 15)</strong>: Triggers automatic <strong>-15% Flash Sale Discount</strong> to liquidate capital.
+                    </p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;" id="pricingCards">
+                        <!-- Dynamic pricing cards rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Velocity Analytics Tab ──────────── -->
+        <div class="tab-panel" id="tab-analytics">
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-header">
+                    <div class="panel-title">📊 Financial Velocity & M2M Revenue Chart</div>
+                    <button class="btn btn-outline" onclick="loadAnalytics()">↻ Update Analytics</button>
+                </div>
+                <div style="padding:24px;">
+                    <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--green);">
+                            <span style="width:12px;height:12px;border-radius:3px;background:var(--green);display:inline-block;"></span> Revenue
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--red);">
+                            <span style="width:12px;height:12px;border-radius:3px;background:var(--red);display:inline-block;"></span> Supplier Expenses
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);">
+                            <span style="width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block;"></span> Net Profit
+                        </div>
+                    </div>
+                    
+                    <!-- SVG Velocity Chart Canvas -->
+                    <div style="background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:12px;padding:16px;position:relative;min-height:260px;" id="chartContainer">
+                        <svg id="velocitySvg" width="100%" height="240" style="overflow:visible;"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Summary Cards -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;" id="analyticsSummary">
+                <!-- Analytics summary loaded dynamically -->
             </div>
         </div>
 
@@ -606,9 +912,28 @@
             <!-- Agent Controls -->
             <div class="panel" style="margin-bottom:16px;">
                 <div class="panel-header">
-                    <div class="panel-title">Agent Controls</div>
+                    <div class="panel-title">Agent Controls & AI Strategy Configurator</div>
+                    <span class="badge badge-green">BEHAVIOR MODIFIER</span>
                 </div>
                 <div style="padding:20px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:14px;margin-bottom:18px;">
+                        <div class="input-group" style="flex-direction:column;align-items:flex-start;gap:6px;">
+                            <label style="font-weight:700;">AI Buyer Personality Strategy</label>
+                            <select id="buyerStrategy" style="width:100%;">
+                                <option value="balanced">🎲 Balanced Explorer (Random Market Sourcing)</option>
+                                <option value="zero_stock">🎯 Zero-Stock Hunter (Forces Restock Evaluation)</option>
+                                <option value="bargain">🏷️ Flash-Sale Bargain Hunter (Prefers Discounted SKUs)</option>
+                                <option value="frugal">🛡️ Conservative Saver (Low Cost SKUs Only)</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="flex-direction:column;align-items:flex-start;gap:6px;">
+                            <label style="font-weight:700;">AI Restock Activation Mode</label>
+                            <select id="restockStrategy" style="width:100%;">
+                                <option value="zero_only">⚡ Zero-Stock Trigger Only (Strict Just-In-Time)</option>
+                                <option value="proactive">📦 Proactive Threshold Restock (Stock ≤ Reorder At)</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="agent-controls">
                         <div class="input-group">
                             <label>Cycles</label>
@@ -690,7 +1015,11 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             tab.classList.add('active');
-            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            const panelId = 'tab-' + tab.dataset.tab;
+            document.getElementById(panelId).classList.add('active');
+            
+            if (tab.dataset.tab === 'analytics') loadAnalytics();
+            if (tab.dataset.tab === 'pricing') loadCatalog();
         });
     });
 
@@ -715,7 +1044,7 @@
         return '<span class="badge badge-blue">' + status + '</span>';
     }
 
-    /* ── Load Catalog ─────────────────────── */
+    /* ── Load Catalog & Dynamic Pricing ────── */
     async function loadCatalog() {
         try {
             const res = await fetch(API + '/api/inventory');
@@ -734,33 +1063,167 @@
             const rows = products.map(p => {
                 const ratio = Math.min(p.stock / (p.reorder_threshold * 3), 1) * 100;
                 const color = stockColor(p.stock, p.reorder_threshold);
-                let statusText;
-                if (p.stock === 0) {
-                    statusText = '<span class="badge badge-gray">OUT OF STOCK</span>';
-                } else if (p.stock <= p.reorder_threshold) {
-                    statusText = '<span class="badge badge-red">LOW STOCK</span>';
+                
+                let pricingBadge = '';
+                if (p.pricing_type === 'surge') {
+                    pricingBadge = '<span class="badge badge-red" style="font-size:10px;">⚡ SURGE (+25%)</span>';
+                } else if (p.pricing_type === 'discount') {
+                    pricingBadge = '<span class="badge badge-green" style="font-size:10px;">🏷️ FLASH SALE (-15%)</span>';
                 } else {
-                    statusText = '<span class="badge badge-green">IN STOCK</span>';
+                    pricingBadge = '<span class="badge badge-blue" style="font-size:10px;">✓ STABLE</span>';
                 }
+
+                const priceDisplay = p.pricing_type !== 'standard' 
+                    ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;margin-right:6px;">${paise(p.price_paise)}</span><strong class="price" style="color:${p.pricing_type === 'surge' ? 'var(--red)' : 'var(--green)'}">${paise(p.effective_price_paise)}</strong>`
+                    : `<span class="price">${paise(p.price_paise)}</span>`;
 
                 return `<tr>
                     <td><span class="sku-code">${p.sku}</span></td>
                     <td>${p.name}</td>
                     <td><span class="badge badge-purple">${p.category}</span></td>
-                    <td class="price">${paise(p.price_paise)}</td>
+                    <td>${priceDisplay}</td>
                     <td>
                         ${p.stock}
                         <div class="stock-bar"><div class="fill" style="width:${ratio}%;background:${color}"></div></div>
                     </td>
                     <td>${p.reorder_threshold}</td>
-                    <td>${statusText}</td>
+                    <td>${pricingBadge}</td>
                 </tr>`;
             }).join('');
 
             document.getElementById('catalogBody').innerHTML = rows;
+
+            // Update Dynamic Pricing Matrix view
+            renderPricingCards(products);
         } catch (e) {
             console.error('loadCatalog error:', e);
         }
+    }
+
+    function renderPricingCards(products) {
+        const container = document.getElementById('pricingCards');
+        if (!container) return;
+
+        const cards = products.map(p => {
+            const isSurge = p.pricing_type === 'surge';
+            const isDiscount = p.pricing_type === 'discount';
+            const badgeClass = isSurge ? 'badge-red' : (isDiscount ? 'badge-green' : 'badge-blue');
+            
+            return `
+            <div style="background:var(--card);border:1px solid var(--glass-border);backdrop-filter:blur(20px);padding:18px;border-radius:14px;box-shadow:var(--shadow);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:11px;color:var(--muted);font-weight:700;">${p.sku}</div>
+                        <div style="font-size:15px;font-weight:800;margin-top:2px;">${p.name}</div>
+                    </div>
+                    <span class="badge ${badgeClass}">${p.pricing_label}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:10px;border-top:1px solid var(--glass-border);">
+                    <div>
+                        <span style="font-size:11px;color:var(--muted);display:block;">Base Price</span>
+                        <span style="font-size:13px;text-decoration:line-through;color:var(--muted);">${paise(p.price_paise)}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:11px;color:var(--muted);display:block;">M2M Dynamic Price</span>
+                        <span style="font-size:18px;font-weight:800;color:${isSurge ? 'var(--red)' : (isDiscount ? 'var(--green)' : 'var(--accent)')}">${paise(p.effective_price_paise)}</span>
+                    </div>
+                </div>
+                <div style="margin-top:12px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;">
+                    <span>Current Stock: <strong>${p.stock}</strong></span>
+                    <span>Reorder Point: <strong>${p.reorder_threshold}</strong></span>
+                </div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = cards;
+    }
+
+    /* ── Load Analytics & Render SVG Chart ──── */
+    async function loadAnalytics() {
+        try {
+            const res = await fetch(API + '/api/analytics');
+            if (!res.ok) return;
+            const data = await res.json();
+            const { metrics, history } = data;
+
+            // Render summary metrics
+            const summaryEl = document.getElementById('analyticsSummary');
+            if (summaryEl) {
+                summaryEl.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Sales Revenue</div>
+                    <div class="stat-value" style="color:var(--green);">${paise(metrics.total_revenue_paise)}</div>
+                    <div class="stat-sub">${metrics.successful_sales} Successful Sales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Restock Expenses</div>
+                    <div class="stat-value" style="color:var(--red);">${paise(metrics.total_expenses_paise)}</div>
+                    <div class="stat-sub">${metrics.successful_restocks} Replenishments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Surge Items</div>
+                    <div class="stat-value" style="color:var(--amber);">${metrics.surge_pricing_count}</div>
+                    <div class="stat-sub">High Scarcity (+25%)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Zero-Stock Count</div>
+                    <div class="stat-value" style="color:var(--purple);">${metrics.out_of_stock_count}</div>
+                    <div class="stat-sub">Auto-Restock Candidates</div>
+                </div>`;
+            }
+
+            // Render SVG Velocity Chart
+            renderVelocityChart(history);
+        } catch (e) {
+            console.error('loadAnalytics error:', e);
+        }
+    }
+
+    function renderVelocityChart(history) {
+        const svg = document.getElementById('velocitySvg');
+        if (!svg) return;
+        const width = svg.clientWidth || 700;
+        const height = 240;
+        const padding = 35;
+
+        if (!history || history.length < 2) {
+            svg.innerHTML = `<text x="${width/2}" y="${height/2}" fill="var(--muted)" text-anchor="middle" font-size="13" font-weight="600">Run the Agent to generate financial transaction curves...</text>`;
+            return;
+        }
+
+        const maxVal = Math.max(
+            ...history.map(h => Math.max(h.revenue, h.expenses, Math.abs(h.profit))),
+            500
+        ) * 1.1;
+
+        const getX = (i) => padding + (i / (history.length - 1)) * (width - padding * 2);
+        const getY = (val) => height - padding - (val / maxVal) * (height - padding * 2);
+
+        let revPoints = history.map((h, i) => `${getX(i)},${getY(h.revenue)}`).join(' ');
+        let expPoints = history.map((h, i) => `${getX(i)},${getY(h.expenses)}`).join(' ');
+        let prfPoints = history.map((h, i) => `${getX(i)},${getY(h.profit < 0 ? 0 : h.profit)}`).join(' ');
+
+        let svgHtml = `
+            <!-- Gridlines -->
+            <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4"/>
+            <line x1="${padding}" y1="${padding}" x2="${width - padding}" y2="${padding}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4"/>
+            
+            <!-- Curves -->
+            <polyline fill="none" stroke="var(--green)" stroke-width="3" points="${revPoints}" />
+            <polyline fill="none" stroke="var(--red)" stroke-width="3" points="${expPoints}" />
+            <polyline fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6,4" points="${prfPoints}" />
+        `;
+
+        // Render Glowing Points
+        history.forEach((h, i) => {
+            const x = getX(i);
+            const yRev = getY(h.revenue);
+            const yExp = getY(h.expenses);
+            svgHtml += `<circle cx="${x}" cy="${yRev}" r="4" fill="var(--green)" />`;
+            svgHtml += `<circle cx="${x}" cy="${yExp}" r="4" fill="var(--red)" />`;
+        });
+
+        svg.innerHTML = svgHtml;
     }
 
     /* ── Load Ledger ──────────────────────── */
@@ -923,37 +1386,53 @@
 
             // EVALUATING
             setAgentState('EVALUATING');
-            logConsole('Evaluating catalog...', 'info');
+            const buyerStrat = document.getElementById('buyerStrategy').value;
+            const restockStrat = document.getElementById('restockStrategy').value;
+
+            logConsole(`Evaluating catalog [Strategy: ${mode === 'buyer' ? buyerStrat : restockStrat}]...`, 'info');
 
             const intents = [];
             
             if (mode === 'buyer') {
-                for (const p of products) {
-                    if (p.stock > 0) {
-                        // Agent decides to buy units based on affordability, respecting available stock
-                        let qty = Math.min(2, p.stock);
-                        const maxAffordableQty = Math.floor(500000 / p.price_paise);
-                        qty = Math.min(qty, maxAffordableQty);
-                        
-                        if (qty > 0) {
-                            const cost = qty * p.price_paise;
-                            intents.push({ sku: p.sku, quantity: qty, reason: `AI Consumer Demand: Sourcing ${p.category}`, cost });
-                        }
+                let eligibleProducts = [...products].filter(p => p.stock > 0);
+                
+                if (buyerStrat === 'zero_stock') {
+                    // Sort by lowest stock first to force zero-stock restock trigger
+                    eligibleProducts.sort((a, b) => a.stock - b.stock);
+                } else if (buyerStrat === 'bargain') {
+                    // Sort by lowest price multiplier (discounts first)
+                    eligibleProducts.sort((a, b) => (a.multiplier || 1) - (b.multiplier || 1));
+                } else if (buyerStrat === 'frugal') {
+                    // Filter SKUs under 100000 paise (₹1,000)
+                    eligibleProducts = eligibleProducts.filter(p => (p.effective_price_paise || p.price_paise) <= 100000);
+                } else {
+                    // Random shuffle
+                    eligibleProducts.sort(() => 0.5 - Math.random());
+                }
+
+                for (const p of eligibleProducts) {
+                    const price = p.effective_price_paise || p.price_paise;
+                    let qty = Math.min(2, p.stock);
+                    const maxAffordableQty = Math.floor(500000 / price);
+                    qty = Math.min(qty, maxAffordableQty);
+                    
+                    if (qty > 0) {
+                        const cost = qty * price;
+                        intents.push({ sku: p.sku, quantity: qty, reason: `AI Buyer [${buyerStrat}]: Sourcing ${p.name}`, cost });
                     }
                 }
-                // Randomize intents so it doesn't always buy the same top items
-                intents.sort(() => 0.5 - Math.random());
             } else {
                 // Restocker logic
                 for (const p of products) {
-                    if (p.stock <= p.reorder_threshold) {
+                    const shouldRestock = restockStrat === 'zero_only' ? (p.stock === 0) : (p.stock <= p.reorder_threshold);
+                    if (shouldRestock) {
                         let qty = Math.max((p.reorder_threshold * 2) - p.stock, 1);
                         const maxAffordableQty = Math.floor(500000 / (p.price_paise * 0.7));
                         qty = Math.min(qty, maxAffordableQty);
                         
                         if (qty > 0) {
                             const cost = qty * (p.price_paise * 0.7); // 70% cost
-                            intents.push({ sku: p.sku, quantity: qty, reason: `Low stock trigger: ${p.stock}/${p.reorder_threshold}`, cost });
+                            intents.push({ sku: p.sku, quantity: qty, reason: `Restock [${restockStrat}]: ${p.stock}/${p.reorder_threshold}`, cost });
                         }
                     }
                 }
@@ -1195,8 +1674,100 @@
         }, 15000);
     }
 
+    /* ── Animated Background Particle Network ───── */
+    function initBackgroundParticles() {
+        const canvas = document.getElementById('bgCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particleCount = Math.min(Math.floor((width * height) / 18000), 65);
+        const particles = [];
+        const colors = [
+            'rgba(59, 130, 246, ',   // blue
+            'rgba(139, 92, 246, ',  // purple
+            'rgba(6, 182, 212, ',   // cyan
+            'rgba(16, 185, 129, '   // emerald
+        ];
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.45,
+                vy: (Math.random() - 0.5) * 0.45,
+                radius: Math.random() * 2 + 1,
+                colorPrefix: colors[Math.floor(Math.random() * colors.length)],
+                alpha: Math.random() * 0.5 + 0.25,
+                pulseSpeed: Math.random() * 0.015 + 0.005,
+                pulseAngle: Math.random() * Math.PI * 2
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                p.pulseAngle += p.pulseSpeed;
+                const currentAlpha = Math.max(0.1, p.alpha + Math.sin(p.pulseAngle) * 0.2);
+
+                // Draw Particle Glow
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = p.colorPrefix + (currentAlpha * 0.15) + ')';
+                ctx.fill();
+
+                // Draw Particle Core
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.colorPrefix + currentAlpha + ')';
+                ctx.fill();
+
+                // Connect nearby particles
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 140) {
+                        const lineAlpha = (1 - dist / 140) * 0.18;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = p.colorPrefix + lineAlpha + ')';
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    }
+
     /* ── Init ──────────────────────────────── */
     async function init() {
+        initBackgroundParticles();
         await checkStatus();
         try { await loadCatalog(); } catch(e) { console.error('Init catalog error:', e); }
         try { await loadLedger(); } catch(e) { console.error('Init ledger error:', e); }
