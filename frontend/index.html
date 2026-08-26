@@ -1008,6 +1008,26 @@
     let refreshTimer = null;
     let agentRunning = false;
     let agentAbort = null;
+    
+    // Robust fetch to handle transient network errors during server restarts
+    async function fetchWithRetry(url, options = {}, retries = 3) {
+        let lastError;
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(url, options);
+                if (res.status === 502) {
+                    throw new TypeError("Failed to fetch (502 Bad Gateway)");
+                }
+                return res;
+            } catch (error) {
+                lastError = error;
+                if (error.name === 'AbortError') throw error;
+                console.warn(`Fetch failed (${url}), retrying in 1s... (${i+1}/${retries})`);
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+        throw lastError;
+    }
 
     /* ── Tabs ──────────────────────────────── */
     document.querySelectorAll('.tab').forEach(tab => {
@@ -1047,7 +1067,7 @@
     /* ── Load Catalog & Dynamic Pricing ────── */
     async function loadCatalog() {
         try {
-            const res = await fetch(API + '/api/inventory');
+            const res = await fetchWithRetry(API + '/api/inventory');
             if (!res.ok) throw new Error('Catalog fetch failed: ' + res.status);
             const data = await res.json();
             const products = data.products || [];
@@ -1141,7 +1161,7 @@
     /* ── Load Analytics & Render SVG Chart ──── */
     async function loadAnalytics() {
         try {
-            const res = await fetch(API + '/api/analytics');
+            const res = await fetchWithRetry(API + '/api/analytics');
             if (!res.ok) return;
             const data = await res.json();
             const { metrics, history } = data;
@@ -1229,7 +1249,7 @@
     /* ── Load Ledger ──────────────────────── */
     async function loadLedger() {
         try {
-            const res = await fetch(API + '/api/ledger');
+            const res = await fetchWithRetry(API + '/api/ledger');
             if (!res.ok) throw new Error('Ledger fetch failed: ' + res.status);
             const entries = await res.json();
             
@@ -1297,7 +1317,7 @@
     /* ── API Status ───────────────────────── */
     async function checkStatus() {
         try {
-            const res = await fetch(API + '/api');
+            const res = await fetchWithRetry(API + '/api');
             if (res.ok) setOnline(); else setOffline();
         } catch { setOffline(); }
     }
@@ -1470,7 +1490,7 @@
                 };
 
                 const endpoint = mode === 'buyer' ? '/api/checkout' : '/api/restock';
-                const res = await fetch(API + endpoint, {
+                const res = await fetchWithRetry(API + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -1486,7 +1506,7 @@
                     // --- AUTO RESTOCK ON OUT OF STOCK ---
                     if (mode === 'buyer') {
                         try {
-                            const invRes = await fetch(API + '/api/inventory', { signal: agentAbort.signal });
+                            const invRes = await fetchWithRetry(API + '/api/inventory', { signal: agentAbort.signal });
                             const data = await invRes.json();
                             const restockIntents = [];
                             for (const p of data.products || []) {
@@ -1507,7 +1527,7 @@
                                     items: restockIntents.map(i => ({ sku: i.sku, quantity: i.quantity })),
                                     trigger_reason: restockIntents.map(i => i.reason).join('; ')
                                 };
-                                const rRes = await fetch(API + '/api/restock', {
+                                const rRes = await fetchWithRetry(API + '/api/restock', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(restockPayload),
@@ -1607,7 +1627,7 @@
         document.getElementById('modalResult').textContent = '';
 
         try {
-            const res = await fetch(API + '/api/inventory');
+            const res = await fetchWithRetry(API + '/api/inventory');
             const data = await res.json();
             const sel = document.getElementById('modalSku');
             sel.innerHTML = data.products.map(p =>
@@ -1631,7 +1651,7 @@
         document.getElementById('btnCheckout').disabled = true;
 
         try {
-            const res = await fetch(API + '/api/checkout', {
+            const res = await fetchWithRetry(API + '/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items: [{ sku, quantity: qty }], trigger_reason: reason })

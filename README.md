@@ -41,17 +41,46 @@ A highly polished, cyber-themed glassmorphism interface featuring:
 ## Agent Architecture
 
 ```mermaid
-flowchart LR
-    Catalog[Merchant Catalog / Inventory]
-    
-    AIBuyer[🛒 AI Buyer Agent] -->|Browses & Buys| Catalog
-    Catalog -->|Stock Depletes| AIBuyer
-    
-    AIRestocker[📦 AI Restocker Agent] -->|Monitors Low Stock| Catalog
-    Catalog -->|Stock Replenished| AIRestocker
-    
-    AIBuyer -->|Generates| Revenue[Sales Revenue]
-    AIRestocker -->|Incurs| Expenses[Supplier Expenses]
+graph TD
+    subgraph "Client App (Glassmorphism UI)"
+        Dashboard[Dashboard]
+        Analytics[Velocity Analytics]
+        PricingMatrix[Dynamic Pricing Matrix]
+        Audit[Audit Ledger]
+    end
+
+    subgraph "Autonomous Agents"
+        Buyer[🤖 AI Buyer Agent]
+        Restocker[📦 AI Restocker Agent]
+    end
+
+    subgraph "Backend Engine (Node.js/Express)"
+        API[REST API Layer]
+        PricingAlg[⚡ Dynamic Pricing Engine]
+        LedgerSystem[📒 Ledger & Audit System]
+        InventoryDB[(In-Memory Inventory)]
+    end
+
+    subgraph "External Integrations"
+        Razorpay[Razorpay Payment Gateway]
+    end
+
+    Buyer -- "Strategy: Bargain / Zero-Stock" --> API
+    Restocker -- "Strategy: Just-in-Time / Proactive" --> API
+
+    API --> PricingAlg
+    PricingAlg -- "Calculates Surge/Discount" --> InventoryDB
+
+    API --> LedgerSystem
+    LedgerSystem -- "Records Transactions" --> InventoryDB
+
+    API -- "Executes /api/checkout & /api/restock" --> Razorpay
+    Razorpay -- "Payment Confirmation" --> LedgerSystem
+
+    Dashboard -- "Polls Catalog" --> API
+    Analytics -- "Polls Metrics" --> API
+    PricingMatrix -- "Polls Pricing" --> API
+    Audit -- "Polls Logs" --> API
 ```
 
 ## Quick Start
