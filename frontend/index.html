@@ -680,6 +680,8 @@
             .state-machine { flex-wrap: wrap; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <!-- ── Animated Background Layers ───────────── -->
@@ -842,6 +844,7 @@
                             <input type="checkbox" id="autoRefresh" checked style="margin-right:4px;accent-color:var(--accent);">Auto-refresh
                         </label>
                         <button class="btn btn-outline" onclick="loadLedger()">↻ Refresh</button>
+                        <button class="btn btn-outline" onclick="downloadLedgerPDF()" style="color:var(--blue); border-color:var(--blue);">⬇️ PDF</button>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1314,6 +1317,62 @@
         }
     }
 
+    /* ── Download Ledger PDF ──────────────── */
+    async function downloadLedgerPDF() {
+        try {
+            const res = await fetchWithRetry(API + '/api/ledger');
+            if (!res.ok) throw new Error('Ledger fetch failed: ' + res.status);
+            const entries = await res.json();
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+
+            doc.setFontSize(16);
+            doc.text("Transaction Audit Trail", 14, 20);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text("Generated on: " + new Date().toLocaleString(), 14, 28);
+
+            const tableColumn = ["ID", "Timestamp", "Type", "Reason", "SKUs", "Value", "RZP Order", "Status", "Error"];
+            const tableRows = [];
+
+            const sorted = [...entries].reverse();
+
+            sorted.forEach(e => {
+                const isExpense = e.type === 'expense';
+                const sign = isExpense ? '-' : '+';
+                const typeStr = isExpense ? 'RESTOCK' : 'SALE';
+                const rowData = [
+                    e.id || '—',
+                    new Date(e.timestamp).toLocaleString(),
+                    typeStr,
+                    e.trigger_reason,
+                    (e.skus || []).join(', '),
+                    sign + paise(e.cart_value_paise),
+                    e.razorpay_order_id || '—',
+                    e.status,
+                    e.error_message || '—'
+                ];
+                tableRows.push(rowData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 35,
+                theme: 'striped',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [40, 40, 40] }
+            });
+
+            doc.save("audit_ledger.pdf");
+        } catch (e) {
+            console.error('downloadLedgerPDF error:', e);
+            alert('Failed to generate PDF: ' + e.message);
+        }
+    }
+
     /* ── API Status ───────────────────────── */
     async function checkStatus() {
         try {
@@ -1391,7 +1450,7 @@
 
             let products;
             try {
-                const res = await fetch(API + '/api/inventory', { signal: agentAbort.signal });
+                const res = await fetchWithRetry(API + '/api/inventory', { signal: agentAbort.signal });
                 const data = await res.json();
                 products = data.products || [];
                 logConsole(`Found ${products.length} products.`, 'info');
