@@ -1,7 +1,7 @@
 # System Architecture
 
 ## Overview
-The Autonomous Agentic Commerce Engine operates using a decoupled architecture, separating the autonomous agent logic from the backend commerce APIs.
+The AutonoMart operates using a decoupled architecture, separating the autonomous agent logic from the backend commerce APIs.
 
 ## Components
 - **Agent Node**: A continuous process scanning the catalog and evaluating purchase decisions based on internal rules or external AI models.

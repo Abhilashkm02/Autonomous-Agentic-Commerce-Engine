@@ -1,11 +1,11 @@
-# Autonomous Agentic Commerce Engine 🤖🛒
+# AutonoMart 🤖🛒
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.x-lightgrey.svg)](https://expressjs.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Test%20Mode-blue)](https://razorpay.com/)
 
 ## Overview
-The Autonomous Agentic Commerce Engine is a machine-to-machine (M2M) commerce platform demonstrating how AI agents interact with merchant infrastructure. 
+The AutonoMart is a machine-to-machine (M2M) commerce platform demonstrating how AI agents interact with merchant infrastructure. 
 
 This project demonstrates two contrasting autonomous agents operating within a highly advanced, dynamic market simulation:
 1. **The AI Buyer (External Consumer):** Simulates external market demand. It browses the catalog, autonomously decides what to purchase based on availability, and executes Razorpay checkouts, generating **Sales Revenue** and depleting stock.

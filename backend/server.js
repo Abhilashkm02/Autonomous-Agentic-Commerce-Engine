@@ -65,7 +65,7 @@ function getProductPricing(product) {
 app.get('/api', (req, res) => {
     res.json({
         status: "online",
-        service: "Autonomous Agentic Commerce Engine",
+        service: "AutonoMart",
         version: "1.1.0",
         endpoints: {
             "/api/inventory": "GET - Agent-readable product catalog with dynamic surge pricing",
@@ -384,6 +384,7 @@ app.get('/api/analytics', (req, res) => {
 app.use(express.static(join(__dirname, '../frontend')));
 app.get('*', (req, res) => res.sendFile(join(__dirname, '../frontend/index.html')));
 
-app.listen(3000, '0.0.0.0', () => {
-    console.log('Server running on port 3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
 });
